@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Real-Time Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: linear-gradient(135deg, #4f46e5, #ec4899);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      color: #111827;
+    }
+
+    .chat-wrapper {
+      background: #f9fafb;
+      width: 900px;
+      max-width: 100%;
+      height: 520px;
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
+      display: grid;
+      grid-template-columns: 230px 1fr;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      background: #111827;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .sidebar h2 {
+      margin: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-online {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .username-section {
+      background: #1f2937;
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .username-section input {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .username-section button {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      background: #6366f1;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .username-section button:disabled {
+      background: #4b5563;
+      cursor: not-allowed;
+    }
+
+    .online-users {
+      flex: 1;
+      background: #020617;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      overflow-y: auto;
+    }
+
+    .online-users h3 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .online-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+
+    .online-user.me {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .online-user-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .online-user span {
+      font-size: 13px;
+    }
+
+    .users-count {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+
+    /* Chat area */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-header {
+      padding: 12px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .messages {
+      flex: 1;
+      background: #f3f4f6;
+      padding: 12px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 70%;
+    }
+
+    .message-row.self {
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .message-bubble {
+      padding: 8px 10px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .message-row.self .message-bubble {
+      background: #4f46e5;
+      color: #eef2ff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.other .message-bubble {
+      background: white;
+      color: #111827;
+      border: 1px solid #e5e7eb;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-meta {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .system-message {
+      align-self: center;
+      font-size: 12px;
+      color: #6b7280;
+      margin: 4px 0;
+    }
+
+    .typing-indicator {
+      font-size: 12px;
+      color: #6b7280;
+      padding: 4px 16px 0;
+      min-height: 18px;
+    }
+
+    .chat-input {
+      padding: 10px 12px;
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .chat-input button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #4f46e5;
+      color: #eef2ff;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .chat-input button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .chat-wrapper {
+        grid-template-columns: 1fr;
+        height: 600px;
+      }
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>
+        <span class="badge-online"></span>
+        Real-Time Chat
+      </h2>
+
+      <div class="username-section">
+        <div>Set your display name:</div>
+        <input type="text" id="usernameInput" placeholder="e.g. Sumaira" />
+        <button id="setNameBtn">Join Chat</button>
+        <div id="selfNameHint" style="font-size: 12px; color: #9ca3af;"></div>
+      </div>
+
+      <div class="online-users">
+        <h3>Online Users</h3>
+        <div id="onlineUsersList"></div>
+        <div id="usersCount" class="users-count">Users online: 0</div>
+      </div>
+    </aside>
+
+    <!-- Chat area -->
+    <section class="chat-area">
+      <header class="chat-header">
+        <div class="chat-header-title">General Room</div>
+        <div id="connectionStatus" class="status-text">
+          Connecting…
+        </div>
+      </header>
+
+      <div id="messages" class="messages"></div>
+
+      <div id="typingIndicator" class="typing-indicator"></div>
+
+      <div class="chat-input">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Type a message…"
+          disabled
+        />
+        <button id="sendBtn" disabled>Send</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let username = "";
+    let socket = null;
+    let typingTimeout = null;
+    const TYPING_DELAY = 1200; // ms
+
+    const usernameInput = document.getElementById("usernameInput");
+    const setNameBtn = document.getElementById("setNameBtn");
+    const selfNameHint = document.getElementById("selfNameHint");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const usersCountEl = document.getElementById("usersCount");
+    const onlineUsersList = document.getElementById("onlineUsersList");
+    const messagesEl = document.getElementById("messages");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // Load old messages from localStorage
+    const storedHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+    storedHistory.forEach((m) => addChatMessage(m, false));
+
+    // Setup WebSocket
+    function initSocket() {
+      socket = new WebSocket("ws://localhost:8080");
+
+      socket.addEventListener("open", () => {
+        connectionStatus.textContent = "Connected ✅";
+      });
+
+      socket.addEventListener("message", (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === "users") {
+          updateUsers(msg);
+        } else if (msg.type === "chat") {
+          addChatMessage(msg, true);
+        } else if (msg.type === "typing") {
+          updateTyping(msg);
+        }
+      });
+
+      socket.addEventListener("close", () => {
+        connectionStatus.textContent = "Disconnected ❌";
+      });
+    }
+
+    initSocket();
+
+    // Set username
+    setNameBtn.addEventListener("click", () => {
+      const value = usernameInput.value.trim();
+      if (!value) return;
+
+      username = value;
+      usernameInput.disabled = true;
+      setNameBtn.disabled = true;
+      messageInput.disabled = false;
+      sendBtn.disabled = false;
+      selfNameHint.textContent = `You are logged in as "${username}"`;
+
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            type: "join",
+            user: username,
+          })
+        );
+      }
+    });
+
+    // send message handlers
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      } else {
+        sendTyping(true);
+      }
+    });
+
+    messageInput.addEventListener("keyup", (e) => {
+      if (typingTimeout) clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => sendTyping(false), TYPING_DELAY);
+    });
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !username) return;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+      const msg = {
+        type: "chat",
+        text,
+      };
+      socket.send(JSON.stringify(msg));
+      messageInput.value = "";
+      sendTyping(false);
+    }
+
+    // Typing indicator
+    function sendTyping(isTyping) {
+      if (!username || !socket || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(
+        JSON.stringify({
+          type: "typing",
+          isTyping,
+        })
+      );
+    }
+
+    function updateTyping({ user, isTyping }) {
+      if (isTyping) {
+        typingIndicator.textContent = `${user} is typing…`;
+      } else {
+        typingIndicator.textContent = "";
+      }
+    }
+
+    // Online users
+    function updateUsers({ users, count }) {
+      usersCountEl.textContent = `Users online: ${count}`;
+      onlineUsersList.innerHTML = "";
+
+      users.forEach((u) => {
+        const div = document.createElement("div");
+        div.classList.add("online-user");
+        if (u === username) div.classList.add("me");
+
+        const dot = document.createElement("div");
+        dot.classList.add("online-user-dot");
+
+        const span = document.createElement("span");
+        span.textContent = u === username ? `${u} (You)` : u;
+
+        div.appendChild(dot);
+        div.appendChild(span);
+        onlineUsersList.appendChild(div);
+      });
+    }
+
+    // Show chat message in UI + save to localStorage if from server
+    function addChatMessage({ user, text, time }, saveToStorage = true) {
+      if (!time) {
+        time = new Date().toLocaleTimeString();
+      }
+
+      const row = document.createElement("div");
+      row.classList.add("message-row");
+      row.classList.add(user === username ? "self" : "other");
+
+      const bubble = document.createElement("div");
+      bubble.classList.add("message-bubble");
+      bubble.textContent = text;
+
+      const meta = document.createElement("div");
+      meta.classList.add("message-meta");
+      meta.textContent = `${user} • ${time}`;
+
+      row.appendChild(bubble);
+      row.appendChild(meta);
+
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      if (saveToStorage) {
+        const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+        history.push({ user, text, time });
+        // limit history size
+        if (history.length > 100) history.shift();
+        localStorage.setItem("chatHistory", JSON.stringify(history));
+      }
+    }
+  </script>
+</body>
+</html>
