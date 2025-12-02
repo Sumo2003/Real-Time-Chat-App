@@ -7,25 +7,25 @@ This project demonstrates real-time communication, event-driven backend developm
 
 ##✨ Features
 
--🔹 Real-Time Messaging
+🔹 Real-Time Messaging
 
 Send and receive messages instantly using WebSocket connections.
 
--🔹 Online Users List
+🔹 Online Users List
 
 See who is currently online in the chat room.
 
--🔹 Typing Indicators
+🔹 Typing Indicators
 
 Displays “User is typing…” in real time.
 
--🔹 Helper Bot 🤖
+🔹 Helper Bot 🤖
 
 A simple in-room bot that replies automatically to user messages:
 
 “Thanks for your message, <username>. You said: <text>”
 
--🔹 Modern UI
+🔹 Modern UI
 
 Custom-designed interface with:
 
@@ -77,25 +77,24 @@ realtime-chat-app/
 
 
     ---
-
-    
+ 
 ##▶️ How to Run the Project Locally
 
--🔮 Future Enhancements
+🔮 Future Enhancements
 
--🔐 User authentication (login/signup)
+🔐 User authentication (login/signup)
 
--📁 Multiple chat rooms
+📁 Multiple chat rooms
 
--🧑‍🤝‍🧑 Private messaging (DMs)
+🧑‍🤝‍🧑 Private messaging (DMs)
 
--💾 Database storage (MongoDB/Firebase)
+💾 Database storage (MongoDB/Firebase)
 
--🌐 Deployment (Render + Netlify/Vercel)
+🌐 Deployment (Render + Netlify/Vercel)
 
--🎨 Dark/Light theme toggle
+🎨 Dark/Light theme toggle
 
--🔊 Voice messages
+🔊 Voice messages
 
 
 ---
@@ -106,19 +105,19 @@ realtime-chat-app/
 Sumaira Ashfaque
 Real-time systems enthusiast, frontend developer, and backend learner.
 
--💼 Passionate about building modern and interactive web applications.
+💼 Passionate about building modern and interactive web applications.
 
--1️⃣ Clone the Repository
+1️⃣ Clone the Repository
 
 git clone https://github.com/<your-username>/<repository-name>.git
 
 cd <repository-name>
 
--2️⃣ Install Backend Dependencies
+2️⃣ Install Backend Dependencies
 cd backend
 npm install
 
--3️⃣ Start the WebSocket Server
+3️⃣ Start the WebSocket Server
 node server.js
 
 
@@ -126,7 +125,7 @@ Server runs on:
 
 ws://localhost:8080
 
--4️⃣ Run the Frontend
+4️⃣ Run the Frontend
 
 Option A: Using Live Server (recommended)
 
@@ -138,10 +137,10 @@ Option B: Manual
 
 Double-click index.html → open in Chrome
 
--5️⃣ Test in Multiple Tabs
+5️⃣ Test in Multiple Tabs
 
 
----
+
 
 Open 2 tabs/windows → join with different usernames → chat in real time.
 
