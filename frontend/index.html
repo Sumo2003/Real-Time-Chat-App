@@ -321,9 +321,11 @@
 
   <script>
     let username = "";
-    let socket = null;
+    let lastMessageId = 0;
     let typingTimeout = null;
+    let isTypingSent = false;
     const TYPING_DELAY = 1200; // ms
+    const POLL_INTERVAL = 1500; // ms
 
     const usernameInput = document.getElementById("usernameInput");
     const setNameBtn = document.getElementById("setNameBtn");
@@ -336,36 +338,30 @@
     const messageInput = document.getElementById("messageInput");
     const sendBtn = document.getElementById("sendBtn");
 
-    // Load old messages from localStorage
-    const storedHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-    storedHistory.forEach((m) => addChatMessage(m, false));
+    // Poll the server for new messages, online users and typing status
+    async function poll() {
+      try {
+        const params = new URLSearchParams({ after: lastMessageId });
+        if (username) params.set("user", username);
+        const res = await fetch(`/api/state?${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const state = await res.json();
 
-    // Setup WebSocket
-    function initSocket() {
-      socket = new WebSocket("ws://localhost:8080");
-
-      socket.addEventListener("open", () => {
+        state.messages.forEach((m) => {
+          lastMessageId = Math.max(lastMessageId, m.id);
+          addChatMessage(m);
+        });
+        updateUsers({ users: state.users, count: state.users.length });
+        updateTyping(state.typing);
         connectionStatus.textContent = "Connected ✅";
-      });
-
-      socket.addEventListener("message", (event) => {
-        const msg = JSON.parse(event.data);
-
-        if (msg.type === "users") {
-          updateUsers(msg);
-        } else if (msg.type === "chat") {
-          addChatMessage(msg, true);
-        } else if (msg.type === "typing") {
-          updateTyping(msg);
-        }
-      });
-
-      socket.addEventListener("close", () => {
+      } catch (err) {
         connectionStatus.textContent = "Disconnected ❌";
-      });
+      } finally {
+        setTimeout(poll, POLL_INTERVAL);
+      }
     }
 
-    initSocket();
+    poll();
 
     // Set username
     setNameBtn.addEventListener("click", () => {
@@ -378,15 +374,6 @@
       messageInput.disabled = false;
       sendBtn.disabled = false;
       selfNameHint.textContent = `You are logged in as "${username}"`;
-
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(
-          JSON.stringify({
-            type: "join",
-            user: username,
-          })
-        );
-      }
     });
 
     // send message handlers
@@ -405,36 +392,43 @@
       typingTimeout = setTimeout(() => sendTyping(false), TYPING_DELAY);
     });
 
-    function sendMessage() {
+    async function sendMessage() {
       const text = messageInput.value.trim();
       if (!text || !username) return;
-      if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-      const msg = {
-        type: "chat",
-        text,
-      };
-      socket.send(JSON.stringify(msg));
       messageInput.value = "";
-      sendTyping(false);
+      isTypingSent = false;
+      sendBtn.disabled = true;
+      try {
+        await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: username, text }),
+        });
+      } finally {
+        sendBtn.disabled = false;
+        messageInput.focus();
+      }
     }
 
-    // Typing indicator
+    // Typing indicator (only notify the server when the state changes)
     function sendTyping(isTyping) {
-      if (!username || !socket || socket.readyState !== WebSocket.OPEN) return;
-      socket.send(
-        JSON.stringify({
-          type: "typing",
-          isTyping,
-        })
-      );
+      if (!username || isTyping === isTypingSent) return;
+      isTypingSent = isTyping;
+      fetch("/api/typing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: username, isTyping }),
+      }).catch(() => {});
     }
 
-    function updateTyping({ user, isTyping }) {
-      if (isTyping) {
-        typingIndicator.textContent = `${user} is typing…`;
-      } else {
+    function updateTyping(users) {
+      if (users.length === 0) {
         typingIndicator.textContent = "";
+      } else if (users.length === 1) {
+        typingIndicator.textContent = `${users[0]} is typing…`;
+      } else {
+        typingIndicator.textContent = `${users.join(", ")} are typing…`;
       }
     }
 
@@ -460,11 +454,11 @@
       });
     }
 
-    // Show chat message in UI + save to localStorage if from server
-    function addChatMessage({ user, text, time }, saveToStorage = true) {
-      if (!time) {
-        time = new Date().toLocaleTimeString();
-      }
+    // Show chat message in UI
+    function addChatMessage({ user, text, createdAt }) {
+      const time = new Date(createdAt).toLocaleTimeString();
+      const shouldScroll =
+        messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 40;
 
       const row = document.createElement("div");
       row.classList.add("message-row");
@@ -482,14 +476,8 @@
       row.appendChild(meta);
 
       messagesEl.appendChild(row);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-
-      if (saveToStorage) {
-        const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-        history.push({ user, text, time });
-        // limit history size
-        if (history.length > 100) history.shift();
-        localStorage.setItem("chatHistory", JSON.stringify(history));
+      if (shouldScroll || user === username) {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
       }
     }
   </script>
